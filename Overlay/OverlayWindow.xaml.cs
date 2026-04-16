@@ -246,8 +246,12 @@ public partial class OverlayWindow : Window
     {
         if (ContextMenu is not null)
         {
-            ContextMenu.PlacementTarget = this;
-            ContextMenu.IsOpen = true;
+            ContextMenu.Placement         = System.Windows.Controls.Primitives.PlacementMode.MousePoint;
+            ContextMenu.PlacementTarget   = this;
+            ContextMenu.PlacementRectangle = System.Windows.Rect.Empty;
+            ContextMenu.HorizontalOffset  = 0;
+            ContextMenu.VerticalOffset    = 0;
+            ContextMenu.IsOpen            = true;
             e.Handled = true;
         }
     }
