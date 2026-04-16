@@ -26,10 +26,14 @@ public partial class OverlayWindow : Window
     private const int MaxLogEntries = 100;
 
     private static readonly nint HWND_TOPMOST = new(-1);
-    private const uint SWP_NOMOVE     = 0x0002;
-    private const uint SWP_NOSIZE     = 0x0001;
-    private const uint SWP_NOACTIVATE = 0x0010;
+    private const uint SWP_NOMOVE              = 0x0002;
+    private const uint SWP_NOSIZE              = 0x0001;
+    private const uint SWP_NOACTIVATE          = 0x0010;
     private const uint MONITOR_DEFAULTTONEAREST = 2;
+    private const uint MONITOR_DEFAULTTOPRIMARY = 1;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct POINT { public int X, Y; }
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool SetWindowPos(nint hWnd, nint hWndInsertAfter,
@@ -37,6 +41,9 @@ public partial class OverlayWindow : Window
 
     [DllImport("user32.dll")]
     private static extern nint MonitorFromWindow(nint hwnd, uint dwFlags);
+
+    [DllImport("user32.dll")]
+    private static extern nint MonitorFromPoint(POINT pt, uint dwFlags);
 
     [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
     private static extern bool GetMonitorInfo(nint hMonitor, ref MONITORINFOEX lpmi);
@@ -152,20 +159,10 @@ public partial class OverlayWindow : Window
     {
         if (!double.IsNaN(_settings.OverlayLeft) && !double.IsNaN(_settings.OverlayTop))
         {
-            // If a screen name was saved, verify that screen still exists
-            bool screenOk = string.IsNullOrEmpty(_settings.OverlayScreenName)
-                         || MonitorExists(_settings.OverlayScreenName);
-
-            if (screenOk)
-            {
-                Left = _settings.OverlayLeft;
-                Top  = _settings.OverlayTop;
-            }
-            else
-            {
-                // Saved screen no longer available — fall back to default
-                SetDefaultPosition();
-            }
+            Left = _settings.OverlayLeft;
+            Top  = _settings.OverlayTop;
+            // EnsureOnScreen handles both out-of-bounds and disconnected monitor cases
+            EnsureOnScreen();
         }
         else
         {
@@ -178,6 +175,61 @@ public partial class OverlayWindow : Window
         var area = SystemParameters.WorkArea;
         Left = area.Right  - Width  - 16;
         Top  = area.Bottom - Height - 16;
+    }
+
+    /// <summary>
+    /// Checks whether the window fits within the work area of the monitor it is on.
+    /// If not (or if the monitor is gone), snaps to the bottom-right corner of the
+    /// nearest / primary monitor's work area.
+    /// </summary>
+    private void EnsureOnScreen()
+    {
+        var hwnd = new WindowInteropHelper(this).Handle;
+        if (hwnd == nint.Zero) return;
+
+        // Logical→physical and physical→logical scale factors
+        double invX = 1.0, invY = 1.0; // logical → physical
+        double scaleX = 1.0, scaleY = 1.0; // physical → logical
+        var source = HwndSource.FromHwnd(hwnd);
+        if (source?.CompositionTarget is not null)
+        {
+            invX   = source.CompositionTarget.TransformToDevice.M11;
+            invY   = source.CompositionTarget.TransformToDevice.M22;
+            scaleX = source.CompositionTarget.TransformFromDevice.M11;
+            scaleY = source.CompositionTarget.TransformFromDevice.M22;
+        }
+
+        // Find monitor that contains the window's top-left corner (physical coords)
+        var pt    = new POINT { X = (int)(Left * invX), Y = (int)(Top * invY) };
+        nint hMon = MonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
+
+        double waLeft, waTop, waRight, waBottom;
+        if (hMon != nint.Zero && GetMonitorInfoEx(hMon) is { } info)
+        {
+            // Convert physical work area to logical pixels
+            waLeft   = info.rcWork.Left   * scaleX;
+            waTop    = info.rcWork.Top    * scaleY;
+            waRight  = info.rcWork.Right  * scaleX;
+            waBottom = info.rcWork.Bottom * scaleY;
+        }
+        else
+        {
+            // Fallback: primary screen work area (already logical)
+            var wa = SystemParameters.WorkArea;
+            waLeft = wa.Left; waTop = wa.Top; waRight = wa.Right; waBottom = wa.Bottom;
+        }
+
+        bool outOfBounds =
+            Left          < waLeft   ||
+            Top           < waTop    ||
+            Left + Width  > waRight  ||
+            Top  + Height > waBottom;
+
+        if (outOfBounds)
+        {
+            Left = waRight  - Width  - 16;
+            Top  = waBottom - Height - 16;
+        }
     }
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -282,7 +334,10 @@ public partial class OverlayWindow : Window
     public void SetAnimationsEnabled(bool enabled)
     {
         Dispatcher.InvokeAsync(() =>
-            Visibility = enabled ? Visibility.Visible : Visibility.Hidden);
+        {
+            if (enabled) EnsureOnScreen();
+            Visibility = enabled ? Visibility.Visible : Visibility.Hidden;
+        });
     }
 
     private void HideAll()
