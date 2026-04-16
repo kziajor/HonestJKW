@@ -12,22 +12,22 @@ public sealed class EventRouter
         AgentEvent? ev = payload switch
         {
             UserPromptSubmitPayload p
-                => new AgentEvent(AgentEventType.Working, p.SessionId, null, DateTimeOffset.Now),
+                => new AgentEvent(AgentEventType.Working, p.SessionId, null, p.HookEventName, DateTimeOffset.Now),
 
             ToolUsePayload { HookEventName: "PreToolUse" } p
-                => new AgentEvent(AgentEventType.Working, p.SessionId, p.ToolName, DateTimeOffset.Now),
+                => new AgentEvent(AgentEventType.Working, p.SessionId, p.ToolName, p.HookEventName, DateTimeOffset.Now),
 
             ToolUsePayload { HookEventName: "PostToolUse" } p
                 => DerivePostToolUse(p),
 
             NotificationPayload p
-                => new AgentEvent(AgentEventType.WaitingForUser, p.SessionId, p.Message, DateTimeOffset.Now),
+                => new AgentEvent(AgentEventType.WaitingForUser, p.SessionId, p.Message, p.HookEventName, DateTimeOffset.Now),
 
             StopPayload p
-                => new AgentEvent(AgentEventType.TaskComplete, p.SessionId, null, DateTimeOffset.Now),
+                => new AgentEvent(AgentEventType.TaskComplete, p.SessionId, null, p.HookEventName, DateTimeOffset.Now),
 
             SubagentStopPayload p
-                => new AgentEvent(AgentEventType.SubagentDone, p.SessionId, p.AgentType, DateTimeOffset.Now),
+                => new AgentEvent(AgentEventType.SubagentDone, p.SessionId, p.AgentType, p.HookEventName, DateTimeOffset.Now),
 
             _ => null
         };
@@ -50,10 +50,10 @@ public sealed class EventRouter
                     && p.ToolInput.TryGetProperty("command", out var cmd)
                     ? cmd.GetString() : null;
 
-                return new AgentEvent(AgentEventType.BuildError, p.SessionId, command, DateTimeOffset.Now);
+                return new AgentEvent(AgentEventType.BuildError, p.SessionId, command, p.HookEventName, DateTimeOffset.Now);
             }
         }
 
-        return new AgentEvent(AgentEventType.ToolSuccess, p.SessionId, p.ToolName, DateTimeOffset.Now);
+        return new AgentEvent(AgentEventType.ToolSuccess, p.SessionId, p.ToolName, p.HookEventName, DateTimeOffset.Now);
     }
 }

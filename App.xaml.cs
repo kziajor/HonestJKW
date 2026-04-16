@@ -46,8 +46,7 @@ public partial class App : Application
         if (_trayService.TrayContextMenu is not null)
             _overlay.SetTrayContextMenu(_trayService.TrayContextMenu);
 
-        _router.AgentEventFired   += OnAgentEvent;
-        _hookServer.RawPayloadReceived += raw => _overlay.ShowRawPayload(raw);
+        _router.AgentEventFired += OnAgentEvent;
 
         if (_settings.AnimationsEnabled)
             _overlay.Show();
@@ -67,11 +66,23 @@ public partial class App : Application
         }
     }
 
+    private static string GifNameForEvent(AgentEventType type) => type switch
+    {
+        AgentEventType.Working        => "working.gif",
+        AgentEventType.SubagentDone   => "working.gif",
+        AgentEventType.WaitingForUser => "waiting.gif",
+        AgentEventType.TaskComplete   => "success.gif",
+        AgentEventType.BuildError     => "error.gif",
+        AgentEventType.ToolSuccess    => "(bez zmiany)",
+        _                             => "idle.gif",
+    };
+
     private void OnAgentEvent(object? sender, AgentEvent ev)
     {
         _soundService?.Play(ev.Type);
         _trayService?.UpdateTrayIcon(ev.Type);
         _overlay?.SetState(ev.Type);
+        _overlay?.AppendDebugEntry(GifNameForEvent(ev.Type), ev.HookEventName, ev.Detail);
 
         // Return tray icon to idle after transient states
         if (ev.Type is AgentEventType.BuildError or AgentEventType.TaskComplete)

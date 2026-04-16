@@ -180,9 +180,20 @@ public partial class OverlayWindow : Window
         });
     }
 
-    public void ShowRawPayload(string json)
+    public void AppendDebugEntry(string gifName, string hookEventName, string? toolName)
     {
-        Dispatcher.InvokeAsync(() => RawPayloadText.Text = json);
+        Dispatcher.InvokeAsync(() =>
+        {
+            string separator = string.IsNullOrEmpty(RawPayloadText.Text) ? "" : "\n\n";
+            string entry = $"{separator}gif:   {gifName}\nevent: {hookEventName}";
+            if (!string.IsNullOrEmpty(toolName))
+                entry += $"\ntool:  {toolName}";
+            RawPayloadText.Text += entry;
+
+            // Auto-scroll to bottom
+            var scroll = (ScrollViewer)((Grid)Content).Children[0];
+            scroll.ScrollToBottom();
+        });
     }
 
     public void SetAnimationsEnabled(bool enabled)

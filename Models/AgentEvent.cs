@@ -15,5 +15,6 @@ public record AgentEvent(
     AgentEventType Type,
     string         SessionId,
     string?        Detail,
+    string         HookEventName,
     DateTimeOffset Timestamp
 );

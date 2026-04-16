@@ -12,7 +12,7 @@ public sealed class HookServer : IDisposable
     private readonly EventRouter              _router;
     private          CancellationTokenSource? _cts;
 
-    public event Action<string>? RawPayloadReceived;
+    public event Action<HookPayload>? PayloadReceived;
 
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
@@ -61,10 +61,12 @@ public sealed class HookServer : IDisposable
 
             if (!string.IsNullOrWhiteSpace(body))
             {
-                RawPayloadReceived?.Invoke(body);
                 HookPayload? parsed = ParsePayload(body);
                 if (parsed is not null)
+                {
+                    PayloadReceived?.Invoke(parsed);
                     _router.Process(parsed);
+                }
             }
         }
         catch { /* never block Claude Code */ }
