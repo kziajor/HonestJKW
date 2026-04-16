@@ -21,6 +21,9 @@ public partial class OverlayWindow : Window
     // key → (Image control, gif exists)
     private readonly Dictionary<string, (Image Image, bool HasGif)> _animImages = [];
 
+    private readonly List<string> _logEntries = [];
+    private const int MaxLogEntries = 100;
+
     private static readonly nint HWND_TOPMOST = new(-1);
     private const uint SWP_NOMOVE    = 0x0002;
     private const uint SWP_NOSIZE    = 0x0001;
@@ -180,13 +183,23 @@ public partial class OverlayWindow : Window
     {
         Dispatcher.InvokeAsync(() =>
         {
-            string separator = string.IsNullOrEmpty(RawPayloadText.Text) ? "" : "\n\n";
-            string entry = $"{separator}gif:   {gifName}\nevent: {hookEventName}";
+            string entry = $"gif:   {gifName}\nevent: {hookEventName}";
             if (!string.IsNullOrEmpty(toolName))
                 entry += $"\ntool:  {toolName}";
-            RawPayloadText.Text += entry;
+
+            _logEntries.Add(entry);
+            if (_logEntries.Count > MaxLogEntries)
+                _logEntries.RemoveAt(0);
+
+            RawPayloadText.Text = string.Join("\n\n", _logEntries);
             RawPayloadText.ScrollToEnd();
         });
+    }
+
+    private void CopyLogsButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(RawPayloadText.Text))
+            Clipboard.SetText(RawPayloadText.Text);
     }
 
     public void SetAnimationsEnabled(bool enabled)

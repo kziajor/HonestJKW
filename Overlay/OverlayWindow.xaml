@@ -20,15 +20,32 @@
         </Grid.RowDefinitions>
 
         <!-- Top half: raw payload debug view -->
-        <TextBox x:Name="RawPayloadText"
-                 Grid.Row="0"
-                 Foreground="#00FF00" Background="#CC000000"
-                 FontFamily="Consolas" FontSize="9"
-                 TextWrapping="Wrap" Padding="4"
-                 IsReadOnly="True"
-                 BorderThickness="0"
-                 VerticalScrollBarVisibility="Auto"
-                 CaretBrush="#00FF00" />
+        <Grid Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="24" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Button x:Name="CopyLogsButton"
+                    Grid.Row="0"
+                    Content="Kopiuj logi"
+                    HorizontalAlignment="Right"
+                    Margin="0,2,4,2"
+                    Padding="6,0"
+                    FontFamily="Consolas" FontSize="9"
+                    Background="#333333" Foreground="#00FF00"
+                    BorderBrush="#00FF00" BorderThickness="1"
+                    Cursor="Hand"
+                    Click="CopyLogsButton_Click" />
+            <TextBox x:Name="RawPayloadText"
+                     Grid.Row="1"
+                     Foreground="#00FF00" Background="#CC000000"
+                     FontFamily="Consolas" FontSize="9"
+                     TextWrapping="Wrap" Padding="4"
+                     IsReadOnly="True"
+                     BorderThickness="0"
+                     VerticalScrollBarVisibility="Auto"
+                     CaretBrush="#00FF00" />
+        </Grid>
 
         <!-- Bottom half: animation -->
         <Grid Grid.Row="1">
