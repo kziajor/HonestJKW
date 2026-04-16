@@ -17,6 +17,7 @@ public partial class OverlayWindow : Window
     private readonly SettingsService  _settingsService;
     private System.Threading.Timer?   _idleTimer;
     private DispatcherTimer?          _topmostTimer;
+    private bool                      _debugMode = false; // mirrors XAML initial Height=NormalHeight
 
     // key → (Image control, gif exists)
     private readonly Dictionary<string, (Image Image, bool HasGif)> _animImages = [];
@@ -25,24 +26,80 @@ public partial class OverlayWindow : Window
     private const int MaxLogEntries = 100;
 
     private static readonly nint HWND_TOPMOST = new(-1);
-    private const uint SWP_NOMOVE    = 0x0002;
-    private const uint SWP_NOSIZE    = 0x0001;
+    private const uint SWP_NOMOVE     = 0x0002;
+    private const uint SWP_NOSIZE     = 0x0001;
     private const uint SWP_NOACTIVATE = 0x0010;
+    private const uint MONITOR_DEFAULTTONEAREST = 2;
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool SetWindowPos(nint hWnd, nint hWndInsertAfter,
         int x, int y, int cx, int cy, uint uFlags);
+
+    [DllImport("user32.dll")]
+    private static extern nint MonitorFromWindow(nint hwnd, uint dwFlags);
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+    private static extern bool GetMonitorInfo(nint hMonitor, ref MONITORINFOEX lpmi);
+
+    [DllImport("user32.dll")]
+    private static extern bool EnumDisplayMonitors(nint hdc, nint lprcClip,
+        MonitorEnumProcDelegate lpfnEnum, nint dwData);
+
+    private delegate bool MonitorEnumProcDelegate(nint hMonitor, nint hdcMonitor,
+        ref RECT lprcMonitor, nint dwData);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT { public int Left, Top, Right, Bottom; }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+    private struct MONITORINFOEX
+    {
+        public int  cbSize;
+        public RECT rcMonitor;
+        public RECT rcWork;
+        public uint dwFlags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string szDevice;
+    }
+
+    private static MONITORINFOEX? GetMonitorInfoEx(nint hMonitor)
+    {
+        var info = new MONITORINFOEX { cbSize = Marshal.SizeOf<MONITORINFOEX>() };
+        return GetMonitorInfo(hMonitor, ref info) ? info : null;
+    }
+
+    private static bool MonitorExists(string name)
+    {
+        bool found = false;
+        MonitorEnumProcDelegate proc = (nint hMon, nint _, ref RECT _, nint _) =>
+        {
+            if (GetMonitorInfoEx(hMon) is { } info && info.szDevice == name)
+            {
+                found = true;
+                return false;
+            }
+            return true;
+        };
+        EnumDisplayMonitors(nint.Zero, nint.Zero, proc, nint.Zero);
+        return found;
+    }
+
+    private static string? GetCurrentMonitorName(nint hwnd)
+    {
+        nint hMon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+        return hMon != nint.Zero ? GetMonitorInfoEx(hMon)?.szDevice : null;
+    }
 
     public OverlayWindow(AppSettings settings, SettingsService settingsService)
     {
         _settings        = settings;
         _settingsService = settingsService;
         InitializeComponent();
-        SetInitialPosition();
         LoadAnimations();
 
         SourceInitialized += (_, _) =>
         {
+            SetInitialPosition();
             ForceTopmost();
             SetDebugMode(_settings.DebugMode);
         };
@@ -95,22 +152,40 @@ public partial class OverlayWindow : Window
     {
         if (!double.IsNaN(_settings.OverlayLeft) && !double.IsNaN(_settings.OverlayTop))
         {
-            Left = _settings.OverlayLeft;
-            Top  = _settings.OverlayTop;
+            // If a screen name was saved, verify that screen still exists
+            bool screenOk = string.IsNullOrEmpty(_settings.OverlayScreenName)
+                         || MonitorExists(_settings.OverlayScreenName);
+
+            if (screenOk)
+            {
+                Left = _settings.OverlayLeft;
+                Top  = _settings.OverlayTop;
+            }
+            else
+            {
+                // Saved screen no longer available — fall back to default
+                SetDefaultPosition();
+            }
         }
         else
         {
-            var area = SystemParameters.WorkArea;
-            Left = area.Right  - Width  - 16;
-            Top  = area.Bottom - Height - 16;
+            SetDefaultPosition();
         }
+    }
+
+    private void SetDefaultPosition()
+    {
+        var area = SystemParameters.WorkArea;
+        Left = area.Right  - Width  - 16;
+        Top  = area.Bottom - Height - 16;
     }
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         DragMove();
-        _settings.OverlayLeft = Left;
-        _settings.OverlayTop  = Top;
+        _settings.OverlayLeft        = Left;
+        _settings.OverlayTop         = Top;
+        _settings.OverlayScreenName  = GetCurrentMonitorName(new WindowInteropHelper(this).Handle);
         _settingsService.Save(_settings);
     }
 
@@ -164,9 +239,11 @@ public partial class OverlayWindow : Window
 
     public void SetDebugMode(bool enabled)
     {
+        if (enabled == _debugMode) return;
+        _debugMode = enabled;
         Dispatcher.InvokeAsync(() =>
         {
-            // Adjust position so bottom edge stays fixed
+            // Adjust position so bottom edge stays fixed when toggling
             double delta = enabled ? DebugHeight - NormalHeight : NormalHeight - DebugHeight;
             Top    -= delta;
             Height  = enabled ? DebugHeight : NormalHeight;

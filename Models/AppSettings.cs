@@ -7,6 +7,7 @@ public sealed class AppSettings
     public bool DebugMode         { get; set; } = false;
     public int  HttpPort          { get; set; } = 7849;
     public float EventVolume      { get; set; } = 0.8f;
-    public double OverlayLeft     { get; set; } = double.NaN;
-    public double OverlayTop      { get; set; } = double.NaN;
+    public double OverlayLeft       { get; set; } = double.NaN;
+    public double OverlayTop        { get; set; } = double.NaN;
+    public string? OverlayScreenName { get; set; }
 }
