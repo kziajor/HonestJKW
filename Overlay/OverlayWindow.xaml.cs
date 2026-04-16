@@ -130,10 +130,6 @@ public partial class OverlayWindow : Window
 
             HideAll();
 
-            // ToolSuccess does not change the current animation — agent is still mid-task.
-            if (eventType == AgentEventType.ToolSuccess)
-                return;
-
             string key = eventType switch
             {
                 AgentEventType.Working        => "working",

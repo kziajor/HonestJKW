@@ -4,7 +4,6 @@ public enum AgentEventType
 {
     Idle,
     Working,
-    ToolSuccess,
     BuildError,
     TaskComplete,
     SubagentDone,

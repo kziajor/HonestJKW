@@ -73,7 +73,6 @@ public partial class App : Application
         AgentEventType.WaitingForUser => "waiting.gif",
         AgentEventType.TaskComplete   => "success.gif",
         AgentEventType.BuildError     => "error.gif",
-        AgentEventType.ToolSuccess    => "(bez zmiany)",
         _                             => "idle.gif",
     };
 

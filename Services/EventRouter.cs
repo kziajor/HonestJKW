@@ -15,7 +15,9 @@ public sealed class EventRouter
                 => new AgentEvent(AgentEventType.Working, p.SessionId, null, p.HookEventName, DateTimeOffset.Now),
 
             ToolUsePayload { HookEventName: "PreToolUse" } p
-                => new AgentEvent(AgentEventType.Working, p.SessionId, p.ToolName, p.HookEventName, DateTimeOffset.Now),
+                => p.ToolName is "Bash" or "ExitPlanMode"
+                    ? new AgentEvent(AgentEventType.WaitingForUser, p.SessionId, p.ToolName, p.HookEventName, DateTimeOffset.Now)
+                    : new AgentEvent(AgentEventType.Working, p.SessionId, p.ToolName, p.HookEventName, DateTimeOffset.Now),
 
             ToolUsePayload { HookEventName: "PostToolUse" } p
                 => DerivePostToolUse(p),
@@ -54,6 +56,6 @@ public sealed class EventRouter
             }
         }
 
-        return new AgentEvent(AgentEventType.ToolSuccess, p.SessionId, p.ToolName, p.HookEventName, DateTimeOffset.Now);
+        return new AgentEvent(AgentEventType.Working, p.SessionId, p.ToolName, p.HookEventName, DateTimeOffset.Now);
     }
 }
