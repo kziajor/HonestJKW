@@ -20,12 +20,15 @@
         </Grid.RowDefinitions>
 
         <!-- Top half: raw payload debug view -->
-        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto"
-                      Background="#CC000000">
-            <TextBlock x:Name="RawPayloadText"
-                       Foreground="#00FF00" FontFamily="Consolas" FontSize="9"
-                       TextWrapping="Wrap" Padding="4" />
-        </ScrollViewer>
+        <TextBox x:Name="RawPayloadText"
+                 Grid.Row="0"
+                 Foreground="#00FF00" Background="#CC000000"
+                 FontFamily="Consolas" FontSize="9"
+                 TextWrapping="Wrap" Padding="4"
+                 IsReadOnly="True"
+                 BorderThickness="0"
+                 VerticalScrollBarVisibility="Auto"
+                 CaretBrush="#00FF00" />
 
         <!-- Bottom half: animation -->
         <Grid Grid.Row="1">

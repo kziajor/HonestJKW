@@ -189,10 +189,7 @@ public partial class OverlayWindow : Window
             if (!string.IsNullOrEmpty(toolName))
                 entry += $"\ntool:  {toolName}";
             RawPayloadText.Text += entry;
-
-            // Auto-scroll to bottom
-            var scroll = (ScrollViewer)((Grid)Content).Children[0];
-            scroll.ScrollToBottom();
+            RawPayloadText.ScrollToEnd();
         });
     }
 
