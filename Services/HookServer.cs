@@ -12,6 +12,8 @@ public sealed class HookServer : IDisposable
     private readonly EventRouter              _router;
     private          CancellationTokenSource? _cts;
 
+    public event Action<string>? RawPayloadReceived;
+
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         PropertyNameCaseInsensitive = true
@@ -59,6 +61,7 @@ public sealed class HookServer : IDisposable
 
             if (!string.IsNullOrWhiteSpace(body))
             {
+                RawPayloadReceived?.Invoke(body);
                 HookPayload? parsed = ParsePayload(body);
                 if (parsed is not null)
                     _router.Process(parsed);

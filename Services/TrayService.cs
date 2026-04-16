@@ -15,6 +15,7 @@ public sealed class TrayService : IDisposable
 
     private MenuItem?     _animToggle;
     private MenuItem?     _soundToggle;
+    private MenuItem?     _debugToggle;
     public  ContextMenu?  TrayContextMenu { get; private set; }
 
     public TrayService(AppSettings settings, SettingsService settingsService, OverlayWindow overlay)
@@ -70,6 +71,19 @@ public sealed class TrayService : IDisposable
             _settingsService.Save(_settings);
         };
 
+        _debugToggle = new MenuItem
+        {
+            Header      = "Tryb debug",
+            IsCheckable = true,
+            IsChecked   = _settings.DebugMode,
+        };
+        _debugToggle.Click += (_, _) =>
+        {
+            _settings.DebugMode = _debugToggle.IsChecked;
+            _overlay.SetDebugMode(_settings.DebugMode);
+            _settingsService.Save(_settings);
+        };
+
         var portInfo = new MenuItem
         {
             Header    = $"Nasłuchuje na :{_settings.HttpPort}",
@@ -83,6 +97,7 @@ public sealed class TrayService : IDisposable
         menu.Items.Add(new Separator());
         menu.Items.Add(_animToggle);
         menu.Items.Add(_soundToggle);
+        menu.Items.Add(_debugToggle);
         menu.Items.Add(new Separator());
         menu.Items.Add(portInfo);
         menu.Items.Add(new Separator());

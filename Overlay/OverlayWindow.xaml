@@ -1,0 +1,39 @@
+<Window x:Class="JKWMonitor.Overlay.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:gif="clr-namespace:XamlAnimatedGif;assembly=XamlAnimatedGif"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Black"
+        ShowInTaskbar="False"
+        Topmost="True"
+        ResizeMode="NoResize"
+        Width="200" Height="220"
+        WindowStartupLocation="Manual"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        MouseRightButtonUp="Window_MouseRightButtonUp">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Top half: raw payload debug view -->
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto"
+                      Background="#CC000000">
+            <TextBlock x:Name="RawPayloadText"
+                       Foreground="#00FF00" FontFamily="Consolas" FontSize="9"
+                       TextWrapping="Wrap" Padding="4" />
+        </ScrollViewer>
+
+        <!-- Bottom half: animation -->
+        <Grid Grid.Row="1">
+            <Image x:Name="IdleAnim"    Visibility="Visible" />
+            <Image x:Name="WorkingAnim" Visibility="Collapsed" />
+            <Image x:Name="WaitingAnim" Visibility="Collapsed" />
+            <Image x:Name="ErrorAnim"   Visibility="Collapsed" />
+            <Image x:Name="SuccessAnim" Visibility="Collapsed" />
+        </Grid>
+    </Grid>
+</Window>

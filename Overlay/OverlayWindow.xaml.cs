@@ -38,7 +38,11 @@ public partial class OverlayWindow : Window
         SetInitialPosition();
         LoadAnimations();
 
-        SourceInitialized += (_, _) => ForceTopmost();
+        SourceInitialized += (_, _) =>
+        {
+            ForceTopmost();
+            SetDebugMode(_settings.DebugMode);
+        };
         Deactivated       += (_, _) => ForceTopmost();
 
         // Re-assert every 2 s — some fullscreen apps steal topmost
@@ -126,14 +130,16 @@ public partial class OverlayWindow : Window
 
             HideAll();
 
-            // TaskComplete (Stop) shows waiting — Claude is always waiting for user after stopping.
-            // success.gif reserved for future explicit success signals.
+            // ToolSuccess does not change the current animation — agent is still mid-task.
+            if (eventType == AgentEventType.ToolSuccess)
+                return;
+
             string key = eventType switch
             {
                 AgentEventType.Working        => "working",
                 AgentEventType.SubagentDone   => "working",
                 AgentEventType.WaitingForUser => "waiting",
-                AgentEventType.TaskComplete   => "waiting",
+                AgentEventType.TaskComplete   => "success",
                 AgentEventType.BuildError     => "error",
                 _                             => "idle",
             };
@@ -141,39 +147,42 @@ public partial class OverlayWindow : Window
             if (_animImages.TryGetValue(key, out var entry) && entry.HasGif)
                 entry.Image.Visibility = Visibility.Visible;
 
-            switch (eventType)
+            // Only TaskComplete schedules an idle transition (after 5 min).
+            // All other states stay active until the next event arrives.
+            if (eventType == AgentEventType.TaskComplete)
             {
-                // After task complete: go idle in 20 seconds.
-                case AgentEventType.TaskComplete:
-                    _idleTimer = new System.Threading.Timer(
-                        _ => SetState(AgentEventType.Idle),
-                        null,
-                        TimeSpan.FromSeconds(20),
-                        System.Threading.Timeout.InfiniteTimeSpan);
-                    break;
-
-                // After working/subagent: go idle in 5 minutes if no new activity.
-                case AgentEventType.Working:
-                case AgentEventType.SubagentDone:
-                    _idleTimer = new System.Threading.Timer(
-                        _ => SetState(AgentEventType.Idle),
-                        null,
-                        TimeSpan.FromMinutes(5),
-                        System.Threading.Timeout.InfiniteTimeSpan);
-                    break;
-
-                // After build error: go idle in 5 seconds (brief notification).
-                case AgentEventType.BuildError:
-                    _idleTimer = new System.Threading.Timer(
-                        _ => SetState(AgentEventType.Idle),
-                        null,
-                        TimeSpan.FromSeconds(5),
-                        System.Threading.Timeout.InfiniteTimeSpan);
-                    break;
-
-                // WaitingForUser (Notification): no idle timer — Claude is blocked on user input.
+                _idleTimer = new System.Threading.Timer(
+                    _ => SetState(AgentEventType.Idle),
+                    null,
+                    TimeSpan.FromMinutes(5),
+                    System.Threading.Timeout.InfiniteTimeSpan);
             }
         });
+    }
+
+    private const double NormalHeight = 220;
+    private const double DebugHeight  = 440;
+
+    public void SetDebugMode(bool enabled)
+    {
+        Dispatcher.InvokeAsync(() =>
+        {
+            // Adjust position so bottom edge stays fixed
+            double delta = enabled ? DebugHeight - NormalHeight : NormalHeight - DebugHeight;
+            Top    -= delta;
+            Height  = enabled ? DebugHeight : NormalHeight;
+
+            var debugRow = (System.Windows.Controls.RowDefinition)
+                ((System.Windows.Controls.Grid)Content).RowDefinitions[0];
+            debugRow.Height = enabled
+                ? new GridLength(1, GridUnitType.Star)
+                : new GridLength(0);
+        });
+    }
+
+    public void ShowRawPayload(string json)
+    {
+        Dispatcher.InvokeAsync(() => RawPayloadText.Text = json);
     }
 
     public void SetAnimationsEnabled(bool enabled)

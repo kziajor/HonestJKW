@@ -46,7 +46,8 @@ public partial class App : Application
         if (_trayService.TrayContextMenu is not null)
             _overlay.SetTrayContextMenu(_trayService.TrayContextMenu);
 
-        _router.AgentEventFired += OnAgentEvent;
+        _router.AgentEventFired   += OnAgentEvent;
+        _hookServer.RawPayloadReceived += raw => _overlay.ShowRawPayload(raw);
 
         if (_settings.AnimationsEnabled)
             _overlay.Show();
