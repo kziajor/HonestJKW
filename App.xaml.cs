@@ -43,6 +43,9 @@ public partial class App : Application
         _trayService  = new TrayService(_settings, _settingsService, _overlay);
         _hookServer   = new HookServer(_router, _settings.HttpPort);
 
+        if (_trayService.TrayContextMenu is not null)
+            _overlay.SetTrayContextMenu(_trayService.TrayContextMenu);
+
         _router.AgentEventFired += OnAgentEvent;
 
         if (_settings.AnimationsEnabled)

@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>Assets\Icons\idle.ico</ApplicationIcon>
+    <AssemblyName>JKWMonitor</AssemblyName>
+    <RootNamespace>JKWMonitor</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Exclude tools subdirectory from main project compilation -->
+    <Compile Remove="tools\**\*.*" />
+    <EmbeddedResource Remove="tools\**\*.*" />
+    <None Remove="tools\**\*.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="H.NotifyIcon.Wpf" Version="2.4.1" />
+    <PackageReference Include="NAudio" Version="2.3.0" />
+    <PackageReference Include="XamlAnimatedGif" Version="2.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Sounds -->
+    <Content Include="Assets\Sounds\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <!-- Animations — Content so files are in Publish/Assets/ and can be replaced -->
+    <Content Include="Assets\Animations\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <!-- Icons — embedded Resource so pack:// URI works in App.xaml (TaskbarIcon needs icon at startup) -->
+    <Resource Include="Assets\Icons\**\*.*" />
+  </ItemGroup>
+
+</Project>

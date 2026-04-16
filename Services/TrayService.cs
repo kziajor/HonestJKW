@@ -13,8 +13,9 @@ public sealed class TrayService : IDisposable
     private readonly SettingsService _settingsService;
     private readonly OverlayWindow _overlay;
 
-    private MenuItem? _animToggle;
-    private MenuItem? _soundToggle;
+    private MenuItem?     _animToggle;
+    private MenuItem?     _soundToggle;
+    public  ContextMenu?  TrayContextMenu { get; private set; }
 
     public TrayService(AppSettings settings, SettingsService settingsService, OverlayWindow overlay)
     {
@@ -69,9 +70,6 @@ public sealed class TrayService : IDisposable
             _settingsService.Save(_settings);
         };
 
-        var showOverlay = new MenuItem { Header = "Pokaż overlay" };
-        showOverlay.Click += (_, _) => _overlay.Show();
-
         var portInfo = new MenuItem
         {
             Header    = $"Nasłuchuje na :{_settings.HttpPort}",
@@ -86,13 +84,12 @@ public sealed class TrayService : IDisposable
         menu.Items.Add(_animToggle);
         menu.Items.Add(_soundToggle);
         menu.Items.Add(new Separator());
-        menu.Items.Add(showOverlay);
-        menu.Items.Add(new Separator());
         menu.Items.Add(portInfo);
         menu.Items.Add(new Separator());
         menu.Items.Add(exit);
 
         _icon.ContextMenu = menu;
+        TrayContextMenu   = menu;
     }
 
     public void UpdateTrayIcon(AgentEventType eventType)
