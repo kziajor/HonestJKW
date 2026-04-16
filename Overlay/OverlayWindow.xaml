@@ -27,7 +27,7 @@
             </Grid.RowDefinitions>
             <Button x:Name="CopyLogsButton"
                     Grid.Row="0"
-                    Content="Kopiuj logi"
+                    Content="Copy logs"
                     HorizontalAlignment="Right"
                     Margin="0,2,4,2"
                     Padding="6,0"

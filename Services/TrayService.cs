@@ -1,5 +1,7 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 using H.NotifyIcon;
 using JKWMonitor.Models;
 using JKWMonitor.Overlay;
@@ -8,32 +10,46 @@ namespace JKWMonitor.Services;
 
 public sealed class TrayService : IDisposable
 {
-    private readonly TaskbarIcon   _icon;
-    private readonly AppSettings   _settings;
+    private readonly TaskbarIcon    _icon;
+    private readonly AppSettings    _settings;
     private readonly SettingsService _settingsService;
-    private readonly OverlayWindow _overlay;
+    private readonly OverlayWindow  _overlay;
+    private readonly ProfileService _profileService;
 
-    private MenuItem?     _animToggle;
-    private MenuItem?     _soundToggle;
-    private MenuItem?     _debugToggle;
-    public  ContextMenu?  TrayContextMenu { get; private set; }
+    private MenuItem?    _animToggle;
+    private MenuItem?    _soundToggle;
+    private MenuItem?    _debugToggle;
+    private MenuItem?    _profileMenu;
+    public  ContextMenu? TrayContextMenu { get; private set; }
 
-    public TrayService(AppSettings settings, SettingsService settingsService, OverlayWindow overlay)
+    public TrayService(AppSettings settings, SettingsService settingsService,
+                       OverlayWindow overlay, ProfileService profileService)
     {
         _settings        = settings;
         _settingsService = settingsService;
         _overlay         = overlay;
+        _profileService  = profileService;
+
         _icon = new TaskbarIcon
         {
             Visibility  = Visibility.Visible,
             ToolTipText = "JKW Monitor",
-            IconSource  = new System.Windows.Media.Imaging.BitmapImage(
-                new Uri("pack://application:,,,/Assets/Icons/idle.ico")),
+            IconSource  = LoadIcon("idle"),
         };
         _icon.ForceCreate();
 
         BuildContextMenu();
         UpdateTrayIcon(AgentEventType.Idle);
+    }
+
+    private BitmapImage LoadIcon(string name)
+    {
+        string path = _profileService.ResolveFile("Icons", $"{name}.ico");
+        if (File.Exists(path))
+            return new BitmapImage(new Uri(path));
+
+        // Fallback: empty image rather than crashing
+        return new BitmapImage();
     }
 
     private void BuildContextMenu()
@@ -48,7 +64,7 @@ public sealed class TrayService : IDisposable
 
         _animToggle = new MenuItem
         {
-            Header      = "Animacje",
+            Header      = "Animations",
             IsCheckable = true,
             IsChecked   = _settings.AnimationsEnabled,
         };
@@ -61,7 +77,7 @@ public sealed class TrayService : IDisposable
 
         _soundToggle = new MenuItem
         {
-            Header      = "Dźwięki",
+            Header      = "Sounds",
             IsCheckable = true,
             IsChecked   = _settings.SoundsEnabled,
         };
@@ -73,7 +89,7 @@ public sealed class TrayService : IDisposable
 
         _debugToggle = new MenuItem
         {
-            Header      = "Tryb debug",
+            Header      = "Debug mode",
             IsCheckable = true,
             IsChecked   = _settings.DebugMode,
         };
@@ -84,13 +100,17 @@ public sealed class TrayService : IDisposable
             _settingsService.Save(_settings);
         };
 
+        _profileMenu = new MenuItem { Header = "Profile" };
+        _profileMenu.SubmenuOpened += (_, _) => RefreshProfileSubmenu();
+        RefreshProfileSubmenu();
+
         var portInfo = new MenuItem
         {
-            Header    = $"Nasłuchuje na :{_settings.HttpPort}",
+            Header    = $"Listening on :{_settings.HttpPort}",
             IsEnabled = false,
         };
 
-        var exit = new MenuItem { Header = "Zamknij" };
+        var exit = new MenuItem { Header = "Exit" };
         exit.Click += (_, _) => Application.Current.Shutdown();
 
         menu.Items.Add(title);
@@ -99,12 +119,40 @@ public sealed class TrayService : IDisposable
         menu.Items.Add(_soundToggle);
         menu.Items.Add(_debugToggle);
         menu.Items.Add(new Separator());
+        menu.Items.Add(_profileMenu);
+        menu.Items.Add(new Separator());
         menu.Items.Add(portInfo);
         menu.Items.Add(new Separator());
         menu.Items.Add(exit);
 
         _icon.ContextMenu = menu;
         TrayContextMenu   = menu;
+    }
+
+    private void RefreshProfileSubmenu()
+    {
+        if (_profileMenu is null) return;
+        _profileMenu.Items.Clear();
+
+        string active   = _profileService.ActiveProfile;
+        var    profiles = _profileService.GetProfiles();
+
+        foreach (string profile in profiles)
+        {
+            string captured = profile;
+            var item = new MenuItem
+            {
+                Header      = profile,
+                IsCheckable = true,
+                IsChecked   = profile == active,
+            };
+            item.Click += (_, _) =>
+            {
+                _profileService.SetActiveProfile(captured);
+                RefreshProfileSubmenu();
+            };
+            _profileMenu.Items.Add(item);
+        }
     }
 
     public void UpdateTrayIcon(AgentEventType eventType)
@@ -118,8 +166,7 @@ public sealed class TrayService : IDisposable
                 AgentEventType.WaitingForUser => "waiting",
                 _                             => "idle",
             };
-            var uri = new Uri($"pack://application:,,,/Assets/Icons/{iconName}.ico");
-            _icon.IconSource = new System.Windows.Media.Imaging.BitmapImage(uri);
+            _icon.IconSource = LoadIcon(iconName);
         }
 
         if (Application.Current.Dispatcher.CheckAccess())

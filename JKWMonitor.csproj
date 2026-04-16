@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>Assets\Icons\idle.ico</ApplicationIcon>
+    <ApplicationIcon>Assets\Default\Icons\idle.ico</ApplicationIcon>
     <AssemblyName>JKWMonitor</AssemblyName>
     <RootNamespace>JKWMonitor</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
@@ -27,16 +27,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Sounds -->
-    <Content Include="Assets\Sounds\**\*.*">
+    <!-- All assets (Default profile + any user profiles) copied to output directory -->
+    <Content Include="Assets\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <!-- Animations — Content so files are in Publish/Assets/ and can be replaced -->
-    <Content Include="Assets\Animations\**\*.*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <!-- Icons — embedded Resource so pack:// URI works in App.xaml (TaskbarIcon needs icon at startup) -->
-    <Resource Include="Assets\Icons\**\*.*" />
   </ItemGroup>
 
 </Project>

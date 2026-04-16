@@ -10,4 +10,5 @@ public sealed class AppSettings
     public double OverlayLeft       { get; set; } = double.NaN;
     public double OverlayTop        { get; set; } = double.NaN;
     public string? OverlayScreenName { get; set; }
+    public string  ActiveProfile     { get; set; } = "Default";
 }

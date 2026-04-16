@@ -11,12 +11,15 @@ Pojedynczy projekt WPF bez warstw Clean Architecture — mała narzędziowa apli
 Models/         — POCO records (AppSettings, HookPayload, AgentEvent)
 Services/       — logika biznesowa bez zależności od UI
   SettingsService   — JSON w %APPDATA%\JKWMonitor\settings.json
+  ProfileService    — lista profili z Assets/, rozwiązywanie ścieżek z fallbackiem do Default
   HookServer        — HttpListener 127.0.0.1:7849, zawsze odpowiada 200 {}
   EventRouter       — HookPayload → AgentEvent, C# event AgentEventFired
   SoundService      — NAudio WASAPI + keep-alive silence stream
   TrayService       — H.NotifyIcon TaskbarIcon + context menu
 Overlay/        — przezroczyste okno overlay
-Assets/         — ikony (.ico), dźwięki (.mp3), animacje (.gif)
+Assets/         — profile assetów
+  Default/      — profil domyślny (ikony .ico, dźwięki .mp3, animacje .gif)
+  <Profil>/     — dodatkowe profile użytkownika
 hooks/          — skrypt bash dla hooków Claude Code
 ```
 
@@ -26,6 +29,7 @@ hooks/          — skrypt bash dla hooków Claude Code
 - `SoundService` gra ciszę w tle (volume 0.001) przez WASAPI Shared mode — trzyma USB DAC aktywny, nie blokuje innych aplikacji
 - `App.xaml` używa `ShutdownMode="OnExplicitShutdown"` — brak okna ≠ zamknięcie
 - Overlay jest przeciągalne; pozycja persystowana w `AppSettings`
+- `ProfileService.ResolveFile(subfolder, filename)` — szuka w aktywnym profilu, fallback do `Default`
 
 ## Stany agenta → animacje
 
@@ -42,8 +46,8 @@ hooks/          — skrypt bash dla hooków Claude Code
 
 1. Dodaj wariant do `AgentEventType` w `Models/AgentEvent.cs`
 2. Dodaj case do `EventRouter.Process()` w `Services/EventRouter.cs`
-3. Dodaj `.mp3` do `Assets/Sounds/` i zarejestruj w `SoundService.SoundMap`
-4. Dodaj `.gif` do `Assets/Animations/` i `<Image>` do `Overlay/OverlayWindow.xaml`
+3. Dodaj `.mp3` do `Assets/Default/Sounds/` i zarejestruj nazwę pliku w `SoundService.SoundFiles`
+4. Dodaj `.gif` do `Assets/Default/Animations/` i `<Image>` do `Overlay/OverlayWindow.xaml`
 5. Dodaj case do `OverlayWindow.SetState()`
 
 ## Budowanie
@@ -61,6 +65,7 @@ dotnet publish -c Release -r win-x64 --no-self-contained -o ./Publish -p:Publish
 ```
 
 Katalog wyjściowy: `./Publish` w katalogu projektu.
+Cały katalog `Assets/` (wszystkie profile) jest kopiowany do `Publish/Assets/`.
 Po publikacji skrypt hooków `hooks/jkw-monitor.sh` wskazuje na `./Publish/JKWMonitor.exe` — aplikacja musi być uruchomiona ręcznie przed pracą z Claude Code.
 
 ## Konfiguracja hooków Claude Code
@@ -72,10 +77,10 @@ Jeśli nie działa, skrypt po cichu kończy się z exit 0 — Claude Code nie je
 
 ## Assety zastępcze (placeholder)
 
-Przed dostarczeniem finalnych animacji/ikon wystarczą proste pliki:
-- **Ikony** (`Assets/Icons/`): idle.ico, working.ico, error.ico, waiting.ico — dowolne kolorowe ikony 16x16+32x32
-- **Dźwięki** (`Assets/Sounds/`): error.mp3, success.mp3, notify.mp3, working.mp3 — krótkie pliki MP3
-- **Animacje** (`Assets/Animations/`): idle.gif, working.gif, waiting.gif, error.gif, success.gif — mogą być statyczne GIFy na start
+Przed dostarczeniem finalnych animacji/ikon wystarczą proste pliki w `Assets/Default/`:
+- **Ikony** (`Assets/Default/Icons/`): idle.ico, working.ico, error.ico, waiting.ico — dowolne kolorowe ikony 16x16+32x32
+- **Dźwięki** (`Assets/Default/Sounds/`): error.mp3, success.mp3, notify.mp3, working.mp3 — krótkie pliki MP3
+- **Animacje** (`Assets/Default/Animations/`): idle.gif, working.gif, waiting.gif, error.gif, success.gif — mogą być statyczne GIFy na start
 
 ## Nie rób
 

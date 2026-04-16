@@ -15,6 +15,7 @@ public partial class OverlayWindow : Window
 {
     private readonly AppSettings      _settings;
     private readonly SettingsService  _settingsService;
+    private readonly ProfileService   _profileService;
     private System.Threading.Timer?   _idleTimer;
     private DispatcherTimer?          _topmostTimer;
     private bool                      _debugMode = false; // mirrors XAML initial Height=NormalHeight
@@ -97,12 +98,14 @@ public partial class OverlayWindow : Window
         return hMon != nint.Zero ? GetMonitorInfoEx(hMon)?.szDevice : null;
     }
 
-    public OverlayWindow(AppSettings settings, SettingsService settingsService)
+    public OverlayWindow(AppSettings settings, SettingsService settingsService, ProfileService profileService)
     {
         _settings        = settings;
         _settingsService = settingsService;
+        _profileService  = profileService;
         InitializeComponent();
         LoadAnimations();
+        _profileService.ProfileChanged += (_, _) => Dispatcher.InvokeAsync(LoadAnimations);
 
         SourceInitialized += (_, _) =>
         {
@@ -134,8 +137,6 @@ public partial class OverlayWindow : Window
 
     private void LoadAnimations()
     {
-        string animDir = Path.Combine(AppContext.BaseDirectory, "Assets", "Animations");
-
         var entries = new[]
         {
             ("idle",    IdleAnim),
@@ -147,8 +148,8 @@ public partial class OverlayWindow : Window
 
         foreach (var (name, image) in entries)
         {
-            string path = Path.Combine(animDir, $"{name}.gif");
-            bool exists = File.Exists(path);
+            string path   = _profileService.ResolveFile("Animations", $"{name}.gif");
+            bool   exists = File.Exists(path);
             if (exists)
                 AnimationBehavior.SetSourceUri(image, new Uri(path));
             _animImages[name] = (image, exists);

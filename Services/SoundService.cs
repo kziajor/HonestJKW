@@ -15,18 +15,20 @@ public sealed class SoundService : IDisposable
     private bool                    _disposed;
 
     private AppSettings             _settings;
+    private readonly ProfileService _profileService;
 
-    private static readonly Dictionary<AgentEventType, string> SoundMap = new()
+    private static readonly Dictionary<AgentEventType, string> SoundFiles = new()
     {
-        [AgentEventType.Working]        = @"Assets\Sounds\working.mp3",
-        [AgentEventType.BuildError]     = @"Assets\Sounds\error.mp3",
-        [AgentEventType.TaskComplete]   = @"Assets\Sounds\success.mp3",
-        [AgentEventType.WaitingForUser] = @"Assets\Sounds\notify.mp3",
+        [AgentEventType.Working]        = "working.mp3",
+        [AgentEventType.BuildError]     = "error.mp3",
+        [AgentEventType.TaskComplete]   = "success.mp3",
+        [AgentEventType.WaitingForUser] = "notify.mp3",
     };
 
-    public SoundService(AppSettings settings)
+    public SoundService(AppSettings settings, ProfileService profileService)
     {
-        _settings = settings;
+        _settings       = settings;
+        _profileService = profileService;
         StartKeepAlive();
     }
 
@@ -54,8 +56,10 @@ public sealed class SoundService : IDisposable
     {
         if (!_settings.SoundsEnabled)
             return;
-        if (!SoundMap.TryGetValue(eventType, out string? path))
+        if (!SoundFiles.TryGetValue(eventType, out string? filename))
             return;
+
+        string path = _profileService.ResolveFile("Sounds", filename);
         if (!File.Exists(path))
             return;
 

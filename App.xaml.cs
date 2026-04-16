@@ -13,6 +13,7 @@ public partial class App : Application
 
     private SettingsService? _settingsService;
     private AppSettings?     _settings;
+    private ProfileService?  _profileService;
     private EventRouter?     _router;
     private SoundService?    _soundService;
     private HookServer?      _hookServer;
@@ -28,7 +29,7 @@ public partial class App : Application
         _ownsMutex = isNewInstance;
         if (!isNewInstance)
         {
-            MessageBox.Show("JKW Monitor jest już uruchomiony.", "JKW Monitor",
+            MessageBox.Show("JKW Monitor is already running.", "JKW Monitor",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             Shutdown();
             return;
@@ -36,11 +37,12 @@ public partial class App : Application
 
         _settingsService = new SettingsService();
         _settings        = _settingsService.Load();
+        _profileService  = new ProfileService(_settings, _settingsService);
         _router          = new EventRouter();
 
-        _overlay      = new OverlayWindow(_settings, _settingsService);
-        _soundService = new SoundService(_settings);
-        _trayService  = new TrayService(_settings, _settingsService, _overlay);
+        _overlay      = new OverlayWindow(_settings, _settingsService, _profileService);
+        _soundService = new SoundService(_settings, _profileService);
+        _trayService  = new TrayService(_settings, _settingsService, _overlay, _profileService);
         _hookServer   = new HookServer(_router, _settings.HttpPort);
 
         if (_trayService.TrayContextMenu is not null)
@@ -58,9 +60,9 @@ public partial class App : Application
         catch (System.Net.HttpListenerException ex)
         {
             MessageBox.Show(
-                $"Nie można uruchomić serwera HTTP na porcie {_settings.HttpPort}.\n\n{ex.Message}\n\n" +
-                "Upewnij się, że żaden inny proces nie używa tego portu.",
-                "JKW Monitor — błąd startu",
+                $"Cannot start HTTP server on port {_settings.HttpPort}.\n\n{ex.Message}\n\n" +
+                "Make sure no other process is using this port.",
+                "JKW Monitor — startup error",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             // Continue running — tray and overlay still work, just no hook listening
         }
