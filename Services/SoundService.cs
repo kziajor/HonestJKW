@@ -7,10 +7,14 @@ namespace JKWMonitor.Services;
 
 public sealed class SoundService : IDisposable
 {
-    private WasapiOut?       _keepAliveOut;
-    private bool             _disposed;
+    private WasapiOut?              _keepAliveOut;
+    private WasapiOut?              _currentOut;
+    private AgentEventType?         _currentEventType;
+    private CancellationTokenSource _currentCts = new();
+    private readonly Lock           _playLock   = new();
+    private bool                    _disposed;
 
-    private AppSettings      _settings;
+    private AppSettings             _settings;
 
     private static readonly Dictionary<AgentEventType, string> SoundMap = new()
     {
@@ -57,8 +61,21 @@ public sealed class SoundService : IDisposable
 
         float volume = _settings.EventVolume;
 
+        CancellationTokenSource cts;
+        lock (_playLock)
+        {
+            if (_currentEventType == eventType)
+                return;
+
+            _currentCts.Cancel();
+            _currentOut?.Stop();
+            _currentEventType = eventType;
+            cts = _currentCts = new CancellationTokenSource();
+        }
+
         Task.Run(() =>
         {
+            WasapiOut? output = null;
             try
             {
                 using var reader  = new AudioFileReader(path) { Volume = volume };
@@ -66,21 +83,33 @@ public sealed class SoundService : IDisposable
                                         .Take(TimeSpan.FromMilliseconds(300));
                 var chain         = new ConcatenatingSampleProvider([preRoll, reader]);
 
-                using var output  = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, 0);
+                output = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, 0);
+                lock (_playLock) { _currentOut = output; }
+
                 output.Init(chain);
                 output.Play();
 
-                while (output.PlaybackState == PlaybackState.Playing)
+                while (output.PlaybackState == PlaybackState.Playing && !cts.Token.IsCancellationRequested)
                     Thread.Sleep(50);
+
+                if (cts.Token.IsCancellationRequested)
+                    output.Stop();
             }
             catch { /* audio failure is non-fatal */ }
-        });
+            finally
+            {
+                output?.Dispose();
+                lock (_playLock) { if (_currentOut == output) _currentOut = null; }
+            }
+        }, cts.Token);
     }
 
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
+        _currentCts.Cancel();
+        _currentOut?.Stop();
         _keepAliveOut?.Stop();
         _keepAliveOut?.Dispose();
     }
