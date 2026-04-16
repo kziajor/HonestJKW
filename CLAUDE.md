@@ -16,7 +16,7 @@ Services/       — logika biznesowa bez zależności od UI
   SoundService      — NAudio WASAPI + keep-alive silence stream
   TrayService       — H.NotifyIcon TaskbarIcon + context menu
 Overlay/        — przezroczyste okno overlay
-Assets/         — ikony (.ico), dźwięki (.wav), animacje (.gif)
+Assets/         — ikony (.ico), dźwięki (.mp3), animacje (.gif)
 hooks/          — skrypt bash dla hooków Claude Code
 ```
 
@@ -42,7 +42,7 @@ hooks/          — skrypt bash dla hooków Claude Code
 
 1. Dodaj wariant do `AgentEventType` w `Models/AgentEvent.cs`
 2. Dodaj case do `EventRouter.Process()` w `Services/EventRouter.cs`
-3. Dodaj `.wav` do `Assets/Sounds/` i zarejestruj w `SoundService.SoundMap`
+3. Dodaj `.mp3` do `Assets/Sounds/` i zarejestruj w `SoundService.SoundMap`
 4. Dodaj `.gif` do `Assets/Animations/` i `<Image>` do `Overlay/OverlayWindow.xaml`
 5. Dodaj case do `OverlayWindow.SetState()`
 
@@ -74,7 +74,7 @@ Jeśli nie działa, skrypt po cichu kończy się z exit 0 — Claude Code nie je
 
 Przed dostarczeniem finalnych animacji/ikon wystarczą proste pliki:
 - **Ikony** (`Assets/Icons/`): idle.ico, working.ico, error.ico, waiting.ico — dowolne kolorowe ikony 16x16+32x32
-- **Dźwięki** (`Assets/Sounds/`): error.wav, success.wav, notify.wav, working.wav — krótkie pliki WAV
+- **Dźwięki** (`Assets/Sounds/`): error.mp3, success.mp3, notify.mp3, working.mp3 — krótkie pliki MP3
 - **Animacje** (`Assets/Animations/`): idle.gif, working.gif, waiting.gif, error.gif, success.gif — mogą być statyczne GIFy na start
 
 ## Nie rób

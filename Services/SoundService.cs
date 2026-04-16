@@ -14,10 +14,10 @@ public sealed class SoundService : IDisposable
 
     private static readonly Dictionary<AgentEventType, string> SoundMap = new()
     {
-        [AgentEventType.Working]        = @"Assets\Sounds\working.wav",
-        [AgentEventType.BuildError]     = @"Assets\Sounds\error.wav",
-        [AgentEventType.TaskComplete]   = @"Assets\Sounds\success.wav",
-        [AgentEventType.WaitingForUser] = @"Assets\Sounds\notify.wav",
+        [AgentEventType.Working]        = @"Assets\Sounds\working.mp3",
+        [AgentEventType.BuildError]     = @"Assets\Sounds\error.mp3",
+        [AgentEventType.TaskComplete]   = @"Assets\Sounds\success.mp3",
+        [AgentEventType.WaitingForUser] = @"Assets\Sounds\notify.mp3",
     };
 
     public SoundService(AppSettings settings)
@@ -61,9 +61,13 @@ public sealed class SoundService : IDisposable
         {
             try
             {
-                using var reader = new AudioFileReader(path) { Volume = volume };
-                using var output = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, 0);
-                output.Init(reader);
+                using var reader  = new AudioFileReader(path) { Volume = volume };
+                var preRoll       = new SilenceProvider(reader.WaveFormat).ToSampleProvider()
+                                        .Take(TimeSpan.FromMilliseconds(300));
+                var chain         = new ConcatenatingSampleProvider([preRoll, reader]);
+
+                using var output  = new WasapiOut(NAudio.CoreAudioApi.AudioClientShareMode.Shared, 0);
+                output.Init(chain);
                 output.Play();
 
                 while (output.PlaybackState == PlaybackState.Playing)
