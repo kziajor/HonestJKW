@@ -57,7 +57,7 @@ dotnet build
 Gdy użytkownik poprosi o opublikowanie zmian ("opublikuj", "publish", "zbuduj do publish"):
 
 ```powershell
-dotnet publish -c Release -r win-x64 --self-contained true -o ./Publish /p:PublishSingleFile=true
+dotnet publish -c Release -r win-x64 --no-self-contained -o ./Publish -p:PublishSingleFile=true
 ```
 
 Katalog wyjściowy: `./Publish` w katalogu projektu.
