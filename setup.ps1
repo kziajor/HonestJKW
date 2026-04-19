@@ -15,7 +15,7 @@ $publishDir      = Join-Path $repoRoot "Publish"
 Write-Host ""
 Write-Host "=== Publishing JKW Monitor ===" -ForegroundColor Cyan
 
-dotnet publish -c Release -r win-x64 --no-self-contained -o $publishDir -p:PublishSingleFile=true
+dotnet publish JKWMonitor.csproj -c Release -r win-x64 --no-self-contained -o $publishDir -p:PublishSingleFile=true
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: dotnet publish failed." -ForegroundColor Red

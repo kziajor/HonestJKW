@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GenerateGifs")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b10e7c59875c2fe682d7f04419b391157f8d698e")]
 [assembly: System.Reflection.AssemblyProductAttribute("GenerateGifs")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GenerateGifs")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

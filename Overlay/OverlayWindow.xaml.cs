@@ -22,8 +22,8 @@ public partial class OverlayWindow : Window
     private double                    _profileWidth  = 200;
     private double                    _profileHeight = 220;
 
-    // key → (Image control, gif exists)
-    private readonly Dictionary<string, (Image Image, bool HasGif)> _animImages = [];
+    // key → (Image control, candidate gif paths)
+    private readonly Dictionary<string, (Image Image, string[] Paths)> _animImages = [];
 
     private readonly List<string> _logEntries = [];
     private const int MaxLogEntries = 100;
@@ -150,14 +150,12 @@ public partial class OverlayWindow : Window
 
         foreach (var (name, image) in entries)
         {
-            string path   = _profileService.ResolveFile("Animations", $"{name}.gif");
-            bool   exists = File.Exists(path);
-            if (exists)
-                AnimationBehavior.SetSourceUri(image, new Uri(path));
-            _animImages[name] = (image, exists);
+            string[] paths = _profileService.ResolveFiles("Animations", $"{name}*.gif");
+            _animImages[name] = (image, paths);
         }
 
         ApplyProfileSize();
+        SetState(AgentEventType.Idle);
     }
 
     private void ApplyProfileSize()
@@ -293,8 +291,12 @@ public partial class OverlayWindow : Window
                 _                             => "idle",
             };
 
-            if (_animImages.TryGetValue(key, out var entry) && entry.HasGif)
+            if (_animImages.TryGetValue(key, out var entry) && entry.Paths.Length > 0)
+            {
+                string path = entry.Paths[Random.Shared.Next(entry.Paths.Length)];
+                AnimationBehavior.SetSourceUri(entry.Image, new Uri(path));
                 entry.Image.Visibility = Visibility.Visible;
+            }
 
             // Only TaskComplete schedules an idle transition (after 5 min).
             // All other states stay active until the next event arrives.

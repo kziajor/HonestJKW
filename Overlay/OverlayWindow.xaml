@@ -48,12 +48,12 @@
         </Grid>
 
         <!-- Bottom half: animation -->
-        <Grid Grid.Row="1">
-            <Image x:Name="IdleAnim"    Visibility="Visible" />
-            <Image x:Name="WorkingAnim" Visibility="Collapsed" />
-            <Image x:Name="WaitingAnim" Visibility="Collapsed" />
-            <Image x:Name="ErrorAnim"   Visibility="Collapsed" />
-            <Image x:Name="SuccessAnim" Visibility="Collapsed" />
+        <Grid Grid.Row="1" ClipToBounds="True">
+            <Image x:Name="IdleAnim"    Visibility="Visible"   Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <Image x:Name="WorkingAnim" Visibility="Collapsed" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <Image x:Name="WaitingAnim" Visibility="Collapsed" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <Image x:Name="ErrorAnim"   Visibility="Collapsed" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <Image x:Name="SuccessAnim" Visibility="Collapsed" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center" />
         </Grid>
     </Grid>
 </Window>

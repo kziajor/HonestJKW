@@ -50,6 +50,21 @@ public sealed class ProfileService
         ProfileChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    public string[] ResolveFiles(string subfolder, string pattern)
+    {
+        string profileDir = Path.Combine(AssetsRoot, _settings.ActiveProfile, subfolder);
+        if (Directory.Exists(profileDir))
+        {
+            var files = Directory.GetFiles(profileDir, pattern);
+            if (files.Length > 0) return files;
+        }
+
+        string defaultDir = Path.Combine(AssetsRoot, DefaultProfile, subfolder);
+        return Directory.Exists(defaultDir)
+            ? Directory.GetFiles(defaultDir, pattern)
+            : [];
+    }
+
     public ProfileSettings GetSettings()
     {
         string path = ResolveFile("", "settings.json");

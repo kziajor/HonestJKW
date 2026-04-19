@@ -1,0 +1,35 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JKWMonitor", "JKWMonitor.csproj", "{13A16B87-FC5A-FCC7-49D6-BDB4E0A38C94}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{07C2787E-EAC7-C090-1BA3-A61EC2A24D84}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenerateGifs", "tools\GenerateGifs\GenerateGifs.csproj", "{BF24B080-AC3F-B376-38AC-C1A8B85DA8F2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{13A16B87-FC5A-FCC7-49D6-BDB4E0A38C94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13A16B87-FC5A-FCC7-49D6-BDB4E0A38C94}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13A16B87-FC5A-FCC7-49D6-BDB4E0A38C94}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13A16B87-FC5A-FCC7-49D6-BDB4E0A38C94}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF24B080-AC3F-B376-38AC-C1A8B85DA8F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF24B080-AC3F-B376-38AC-C1A8B85DA8F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF24B080-AC3F-B376-38AC-C1A8B85DA8F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF24B080-AC3F-B376-38AC-C1A8B85DA8F2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BF24B080-AC3F-B376-38AC-C1A8B85DA8F2} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5E99011E-1CEB-4F07-9802-933261E0C387}
+	EndGlobalSection
+EndGlobal
