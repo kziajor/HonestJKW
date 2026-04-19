@@ -18,7 +18,9 @@ public partial class OverlayWindow : Window
     private readonly ProfileService   _profileService;
     private System.Threading.Timer?   _idleTimer;
     private DispatcherTimer?          _topmostTimer;
-    private bool                      _debugMode = false; // mirrors XAML initial Height=NormalHeight
+    private bool                      _debugMode = false;
+    private double                    _profileWidth  = 200;
+    private double                    _profileHeight = 220;
 
     // key → (Image control, gif exists)
     private readonly Dictionary<string, (Image Image, bool HasGif)> _animImages = [];
@@ -154,6 +156,22 @@ public partial class OverlayWindow : Window
                 AnimationBehavior.SetSourceUri(image, new Uri(path));
             _animImages[name] = (image, exists);
         }
+
+        ApplyProfileSize();
+    }
+
+    private void ApplyProfileSize()
+    {
+        var ps = _profileService.GetSettings();
+        _profileWidth  = ps.WindowWidth;
+        _profileHeight = ps.WindowHeight;
+
+        double newHeight = _debugMode ? _profileHeight * 2 : _profileHeight;
+        Width  = _profileWidth;
+        Height = newHeight;
+
+        if (IsLoaded)
+            EnsureOnScreen();
     }
 
     private void SetInitialPosition()
@@ -291,19 +309,17 @@ public partial class OverlayWindow : Window
         });
     }
 
-    private const double NormalHeight = 220;
-    private const double DebugHeight  = 440;
-
     public void SetDebugMode(bool enabled)
     {
         if (enabled == _debugMode) return;
         _debugMode = enabled;
         Dispatcher.InvokeAsync(() =>
         {
-            // Adjust position so bottom edge stays fixed when toggling
-            double delta = enabled ? DebugHeight - NormalHeight : NormalHeight - DebugHeight;
+            double normalH = _profileHeight;
+            double debugH  = _profileHeight * 2;
+            double delta = enabled ? debugH - normalH : normalH - debugH;
             Top    -= delta;
-            Height  = enabled ? DebugHeight : NormalHeight;
+            Height  = enabled ? debugH : normalH;
 
             var debugRow = (System.Windows.Controls.RowDefinition)
                 ((System.Windows.Controls.Grid)Content).RowDefinitions[0];

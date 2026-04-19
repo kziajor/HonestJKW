@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.Json;
 using JKWMonitor.Models;
 
 namespace JKWMonitor.Services;
@@ -47,6 +48,28 @@ public sealed class ProfileService
         _settings.ActiveProfile = profileName;
         _settingsService.Save(_settings);
         ProfileChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public ProfileSettings GetSettings()
+    {
+        string path = ResolveFile("", "settings.json");
+        if (!File.Exists(path)) return new ProfileSettings();
+
+        try
+        {
+            using var doc = JsonDocument.Parse(File.ReadAllText(path));
+            if (doc.RootElement.TryGetProperty("animation", out var anim))
+            {
+                return new ProfileSettings
+                {
+                    WindowWidth  = anim.TryGetProperty("windowWidth",  out var w) ? w.GetInt32() : 200,
+                    WindowHeight = anim.TryGetProperty("windowHeight", out var h) ? h.GetInt32() : 220,
+                };
+            }
+        }
+        catch { /* malformed json — use defaults */ }
+
+        return new ProfileSettings();
     }
 
     /// <summary>
