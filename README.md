@@ -116,11 +116,11 @@ default assets. Each profile is a folder inside `Assets/` (next to `Default/`).
    ```
    MyCharacter/
      Animations/
-       idle.gif
-       working.gif
-       waiting.gif
-       error.gif
-       success.gif
+       idle*.gif        ← one or more files, e.g. idle_001.gif, idle_002.gif
+       working*.gif
+       waiting*.gif
+       error*.gif
+       success*.gif
      Icons/
        idle.ico
        working.ico
@@ -135,7 +135,21 @@ default assets. Each profile is a folder inside `Assets/` (next to `Default/`).
    You only need to include the files you want to override.
    **Any missing file falls back to the `Default` profile automatically.**
 
-3. While the app is running, right-click the tray icon → **Profile** → select your profile.
+   For animations, the app matches files by prefix (e.g. `working*.gif`).
+   If multiple files match, one is chosen at random on each state transition.
+
+3. Optionally add a `settings.json` to control the overlay window size for this profile:
+   ```json
+   {
+     "animation": {
+       "windowWidth": 300,
+       "windowHeight": 240
+     }
+   }
+   ```
+   Without this file the default size (200×220) is used.
+
+4. While the app is running, right-click the tray icon → **Profile** → select your profile.
    The change takes effect immediately — no restart required.
 
 > **Tip:** You can drop a new profile folder into `Assets/` at any time while the app is
@@ -155,10 +169,13 @@ dotnet build
 ## Publish
 
 ```powershell
-dotnet publish -c Release -r win-x64 --no-self-contained -o ./Publish -p:PublishSingleFile=true
+.\publish.ps1
 ```
 
-Or via the setup script:
+This runs `dotnet publish` targeting `win-x64` single-file and outputs to `./Publish/`.
+The entire `Assets/` tree (all profiles) is copied alongside the executable automatically.
+
+For first-time setup (publish + hook registration in one step):
 
 ```powershell
 .\setup.ps1
