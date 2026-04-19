@@ -15,7 +15,7 @@ public sealed class EventRouter
                 => new AgentEvent(AgentEventType.Working, p.SessionId, null, p.HookEventName, DateTimeOffset.Now),
 
             ToolUsePayload { HookEventName: "PreToolUse" } p
-                => p.ToolName is "Bash" or "ExitPlanMode"
+                => p.ToolName is "Bash" or "ExitPlanMode" or "AskUserQuestion"
                     ? new AgentEvent(AgentEventType.WaitingForUser, p.SessionId, p.ToolName, p.HookEventName, DateTimeOffset.Now)
                     : new AgentEvent(AgentEventType.Working, p.SessionId, p.ToolName, p.HookEventName, DateTimeOffset.Now),
 
